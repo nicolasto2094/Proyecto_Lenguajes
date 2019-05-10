@@ -54,7 +54,7 @@ def leer_cod_assembler():
     print(codigo_assemblre)
 
 def LD(instruccion):
-    global registros
+    global registros, registros_16
     binario = ""
     if registros.get(instruccion[1]) != None and registros.get(instruccion[2]) != None:
         binario = "01" + registros[instruccion[1]][0] + registros[instruccion[2]][0], 1,1
@@ -95,7 +95,7 @@ def LD(instruccion):
     return binario
 
 def ADD(instruccion):
-    global registros
+    global registros, registros_16
     binario = ""
 
     if  instruccion[1]=="A" and registros.get(instruccion[2]) != None:
@@ -113,12 +113,99 @@ def ADD(instruccion):
         ERROR(instruccion)
     return binario
 
-def assembre_a_maquina(instruccion):
+def ADC(instruccion):
+    global registros, registros_16
+    binario = ""
+    if  instruccion[1]=="A" and registros.get(instruccion[2]) != None:
+         binario = "10001"+registros[instruccion[2]][0],1
+    elif instruccion[1]=="HL" and registros_16.get(instruccion[2]) != None:
+        binario = "110110101"+registros_16[instruccion[2]][0]+"1010",2
+    else: ERROR(instruccion)
+    return binario
 
-    if instruccion[0]=="LD":
-        return LD(instruccion)
-    elif instruccion[0]=="ADD":
-        return ADD(instruccion)
+def SUB(instruccion):
+    global registros, registros_16
+    binario = ""
+    if registros.get(instruccion[1]) != None:
+        binario = "10010" + registros[instruccion[1]][0], 1
+    else:ERROR(instruccion)
+    return binario
+
+def SBC(instruccion):
+    global registros, registros_16
+    binario = ""
+    if  instruccion[1]=="A" and registros.get(instruccion[2]) != None:
+         binario = "10011"+registros[instruccion[2]][0],1
+    elif instruccion[1]=="HL" and registros_16.get(instruccion[2]) != None:
+        binario = "1101010101"+registros_16[instruccion[2]][0]+"0101",2
+    else: ERROR(instruccion)
+    return binario
+
+def INC(instruccion):
+    global registros, registros_16
+    binario = ""
+    if registros.get(instruccion[1]) != None:
+        binario = "00" + registros[instruccion[1]][0]+"100",1
+    elif registros_16.get(instruccion[1]) != None:
+        binario = "00" + registros_16[instruccion[1]][0]+"0011",1
+    elif instruccion[1]=="(HL)": binario = "00110100",1
+    else:ERROR(instruccion)
+    return binario
+
+def DEC(instruccion):
+    global registros, registros_16
+    binario = ""
+    if registros.get(instruccion[1]) != None:
+        binario = "00" + registros[instruccion[1]][0]+"010",1
+    elif registros_16.get(instruccion[1]) != None:
+        binario = "00" + registros_16[instruccion[1]][0]+"1011",1
+    elif instruccion[1]=="(HL)": binario = "00110010",1
+    else:ERROR(instruccion)
+    return binario
+
+def JP(instruccion):
+    global banderas_estado
+    binario = ""
+    if banderas_estado.get(instruccion[1]) != None:
+        a = "{0:b}".format(int(instruccion[2]))
+        binario = "11" + banderas_estado[instruccion[1]][0]+"010"+ceros_a_la_izq(a,16), 3
+    else:
+        a = "{0:b}".format(int(instruccion[2]))
+        binario = "11000011" +  ceros_a_la_izq(a, 16), 3
+        print("ok")
+    return binario
+
+def otras_fun(instruccion):
+    global registros, registros_16
+    binario = ""
+    if instruccion[0]=="NEG":
+        binario = "1101010110000100",2
+    elif instruccion[0]=="NOP":
+        binario = "00000000",1
+    elif instruccion[0]=="HALT":
+        binario = "10110110",1
+    elif instruccion[0]=="AND" and registros.get(instruccion[1]) != None:
+        binario = "10100"+registros[instruccion[1]][0],1
+    elif instruccion[0]=="OR" and registros.get(instruccion[1]) != None:
+        binario = "10110"+registros[instruccion[1]][0],1
+    elif instruccion[0]=="XOR" and registros.get(instruccion[1]) != None:
+        binario = "10101"+registros[instruccion[1]][0],1
+    elif instruccion[0]=="CP" and registros.get(instruccion[1]) != None:
+        binario = "10111"+registros[instruccion[1]][0],1
+    else:ERROR(instruccion)
+    return binario
+
+def assembre_a_maquina(instruccion):
+    otras = ["AND","OR","XOR","CP","NEG","NOP","HALT"]
+    if instruccion[0]=="LD": return LD(instruccion)
+    elif instruccion[0]=="ADD": return ADD(instruccion)
+    elif instruccion[0]=="ADC": return ADC(instruccion)
+    elif instruccion[0]=="SUB": return SUB(instruccion)
+    elif instruccion[0]=="SBC": return SBC(instruccion)
+    elif instruccion[0]=="INC": return INC(instruccion)
+    elif instruccion[0]=="DEC": return DEC(instruccion)
+    elif instruccion[0]=="JP": return JP(instruccion)
+    elif otras.index(instruccion[0]) !=-1: return otras_fun(instruccion)
     else:
         ERROR(instruccion)
 
