@@ -4,6 +4,7 @@ import time
 
 #// VARIABLES GLOBALES //
 
+
 #REGISTROS, donde se guarda su código y su contenido EN UN ARREGLO
 # ejemplo poner NZ = 1, -->banderas_estado["NZ"][1] = "1"
 registros = { "A":["111",""], "B":["000",""], "C":["001",""], "D":["010",""], "E":["011",""], "H":["100",""], "L":["101",""]}
@@ -14,6 +15,7 @@ registros_16 = {"BC":["00",""],"DE":["01",""],"HL":["10",""],"SP":["11",""]}
 #banderas de estado
 banderas_estado = {"NZ":["000",""],"Z":["001",""],"NC":["010",""],"C":["011",""],"PO":["100",""],"PE":["101",""],
                    "P":["110",""],"M":["111",""] }
+
 
 #MOSTRAR
 tiempo = 1
@@ -35,6 +37,10 @@ def complemento_a_dos(n):
         else: bin = bin + "0"
     return bin
 
+def ERROR(instruccion):
+    print("ERROR!!", instruccion)
+    time.sleep(1000)
+    sys.exit()
 
 def leer_cod_assembler():
     print("Leyendo")
@@ -51,52 +57,70 @@ def LD(instruccion):
     global registros
     binario = ""
     if registros.get(instruccion[1]) != None and registros.get(instruccion[2]) != None:
-        binario = "01" + registros[instruccion[1]][0] + registros[instruccion[2]][0], 1
+        binario = "01" + registros[instruccion[1]][0] + registros[instruccion[2]][0], 1,1
     elif registros.get(instruccion[1]) != None and instruccion[2].find("(") == -1:
         a = "{0:b}".format(int(instruccion[2]))
-        binario = "00" + registros[instruccion[1]][0] + "110" + ceros_a_la_izq(a, 8), 2
+        binario = "00" + registros[instruccion[1]][0] + "110" + ceros_a_la_izq(a, 8), 2,2
     elif instruccion[1] == "A":
         instruccion[2] = instruccion[2].replace("(", "")
         instruccion[2] = instruccion[2].replace(")", "")
         if registros_16.get(instruccion[2]) != None:
-            binario = "00" + registros_16[instruccion[2]][0] + "101", 1
+            binario = "00" + registros_16[instruccion[2]][0] + "101", 1,3
         else:
             a = "{0:b}".format(int(instruccion[2]))
-            binario = "00111101" + ceros_a_la_izq(a, 16), 3
+            binario = "00111101" + ceros_a_la_izq(a, 16), 3,4
     elif instruccion[2] == "A":
         instruccion[1] = instruccion[1].replace("(", "")
         instruccion[1] = instruccion[1].replace(")", "")
         if registros_16.get(instruccion[1]) != None:
-            binario = "00" + registros_16[instruccion[1]][0] + "010", 1
+            binario = "00" + registros_16[instruccion[1]][0] + "010", 1,5
         else:
             a = "{0:b}".format(int(instruccion[1]))
-            binario = "00110010" + ceros_a_la_izq(a, 16), 3
+            binario = "00110010" + ceros_a_la_izq(a, 16), 3,6
     elif registros_16.get(instruccion[1]) != None and instruccion[2].find("(") == -1:
         a = "{0:b}".format(int(instruccion[2]))
-        binario = "00" + registros_16[instruccion[1]][0] + "0001" + ceros_a_la_izq(a, 16), 3
+        binario = "00" + registros_16[instruccion[1]][0] + "0001" + ceros_a_la_izq(a, 16), 3,7
     elif registros_16.get(instruccion[1]) != None and instruccion[1] != "HL":
         instruccion[2] = instruccion[2].replace("(", "")
         instruccion[2] = instruccion[2].replace(")", "")
         a = "{0:b}".format(int(instruccion[2]))
-        binario = "1110110101" + registros_16[instruccion[1]][0] + "1011" + ceros_a_la_izq(a, 16), 3
+        binario = "1110110101" + registros_16[instruccion[1]][0] + "1011" + ceros_a_la_izq(a, 16), 3,8
     elif instruccion[1] == "HL":
         instruccion[2] = instruccion[2].replace("(", "")
         instruccion[2] = instruccion[2].replace(")", "")
         a = "{0:b}".format(int(instruccion[2]))
-        binario = "00101010" + ceros_a_la_izq(a, 16), 4
+        binario = "00101010" + ceros_a_la_izq(a, 16), 4,9
     else:
-        print("ERROR!!", instruccion)
-        time.sleep(1000)
+        ERROR(instruccion)
     return binario
 
+def ADD(instruccion):
+    global registros
+    binario = ""
+
+    if  instruccion[1]=="A" and registros.get(instruccion[2]) != None:
+         binario = "10000"+registros[instruccion[2]][0],1
+    elif instruccion[1]=="A" and instruccion[2].find("(") == -1:
+        instruccion[2] = instruccion[2].replace("(", "")
+        instruccion[2] = instruccion[2].replace(")", "")
+        a = "{0:b}".format(int(instruccion[2]))
+        binario = "11000110"+ceros_a_la_izq(a,8),2
+    elif instruccion[1]=="A" and instruccion[2]=="(HL)":
+        binario = "10000110",1
+    elif instruccion[1]=="HL" and registros_16.get(instruccion[2]) != None:
+        binario = "00"+registros_16[instruccion[2]][0]+"1001",1
+    else:
+        ERROR(instruccion)
+    return binario
 
 def assembre_a_maquina(instruccion):
 
     if instruccion[0]=="LD":
-       return LD(instruccion)
+        return LD(instruccion)
+    elif instruccion[0]=="ADD":
+        return ADD(instruccion)
     else:
-        print("ERROR!!", instruccion)
-        time.sleep(1000)
+        ERROR(instruccion)
 
 
 leer_cod_assembler()
