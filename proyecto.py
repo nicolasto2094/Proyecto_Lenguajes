@@ -3,7 +3,7 @@ import sys
 import time
 
 #// VARIABLES GLOBALES //
-
+MEMORIA = []
 
 #REGISTROS, donde se guarda su código y su contenido EN UN ARREGLO
 # ejemplo poner NZ = 1, -->banderas_estado["NZ"][1] = "1"
@@ -42,6 +42,11 @@ def ERROR(instruccion):
     time.sleep(1000)
     sys.exit()
 
+def BORRAR():pass
+
+def dividir_en_8_bits(bits,num):
+    return []
+
 def leer_cod_assembler():
     print("Leyendo")
     global codigo_assemblre
@@ -51,13 +56,11 @@ def leer_cod_assembler():
             break
         codigo_assemblre.append([entrada,assembre_a_maquina(entrada)])
 
-    print(codigo_assemblre)
-
 def LD(instruccion):
     global registros, registros_16
     binario = ""
     if registros.get(instruccion[1]) != None and registros.get(instruccion[2]) != None:
-        binario = "01" + registros[instruccion[1]][0] + registros[instruccion[2]][0], 1,1
+        binario = ["01" + registros[instruccion[1]][0] + registros[instruccion[2]][0], 1,1]
     elif registros.get(instruccion[1]) != None and instruccion[2].find("(") == -1:
         a = "{0:b}".format(int(instruccion[2]))
         binario = "00" + registros[instruccion[1]][0] + "110" + ceros_a_la_izq(a, 8), 2,2
@@ -172,7 +175,6 @@ def JP(instruccion):
     else:
         a = "{0:b}".format(int(instruccion[2]))
         binario = "11000011" +  ceros_a_la_izq(a, 16), 3
-        print("ok")
     return binario
 
 def otras_fun(instruccion):
@@ -209,5 +211,19 @@ def assembre_a_maquina(instruccion):
     else:
         ERROR(instruccion)
 
+def maquina_a_memoria():
+    global MEMORIA
+    time.sleep(tiempo)
+    BORRAR()
+    for i in codigo_assemblre:
+        a = i[1][1]
+        if a == 1: MEMORIA.append((i[1][0],i[0]))
+        if a == 1:pass
+
+        time.sleep(tiempo/2)
+
+
 
 leer_cod_assembler()
+maquina_a_memoria()
+print(MEMORIA)
