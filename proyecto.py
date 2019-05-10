@@ -18,7 +18,7 @@ banderas_estado = {"NZ":["000",""],"Z":["001",""],"NC":["010",""],"C":["011",""]
 
 
 #MOSTRAR
-tiempo = 1
+tiempo = 0.5
 
 #CODIGOS
 codigo_assemblre = []
@@ -43,9 +43,6 @@ def ERROR(instruccion):
     sys.exit()
 
 def BORRAR():pass
-
-def dividir_en_8_bits(bits,num):
-    return []
 
 def leer_cod_assembler():
     print("Leyendo")
@@ -87,12 +84,12 @@ def LD(instruccion):
         instruccion[2] = instruccion[2].replace("(", "")
         instruccion[2] = instruccion[2].replace(")", "")
         a = "{0:b}".format(int(instruccion[2]))
-        binario = "1110110101" + registros_16[instruccion[1]][0] + "1011" + ceros_a_la_izq(a, 16), 3,8
+        binario = "1110110101" + registros_16[instruccion[1]][0] + "1011" + ceros_a_la_izq(a, 16), 4,8
     elif instruccion[1] == "HL":
         instruccion[2] = instruccion[2].replace("(", "")
         instruccion[2] = instruccion[2].replace(")", "")
         a = "{0:b}".format(int(instruccion[2]))
-        binario = "00101010" + ceros_a_la_izq(a, 16), 4,9
+        binario = "00101010" + ceros_a_la_izq(a, 16), 3,9
     else:
         ERROR(instruccion)
     return binario
@@ -212,17 +209,48 @@ def assembre_a_maquina(instruccion):
         ERROR(instruccion)
 
 def maquina_a_memoria():
-    global MEMORIA
+    global MEMORIA,tiempo
     time.sleep(tiempo)
     BORRAR()
     for i in codigo_assemblre:
         a = i[1][1]
-        if a == 1: MEMORIA.append((i[1][0],i[0]))
-        if a == 1:pass
-
-        time.sleep(tiempo/2)
-
-
+        if a == 1:
+            MEMORIA.append((i[1][0],i[0]))
+            print("instrucción: {}".format(i[0]))
+            print("COD: "+i[1][0])
+        elif a == 2:
+            MEMORIA.append((i[1][0][:8],i[0]))
+            MEMORIA.append((i[1][0][8:16],"--"))
+            print("instrucción: {}".format(i[0]))
+            print("COD: "+i[1][0][:8]+" "+i[1][0][8:16])
+        elif a == 3:
+            MEMORIA.append((i[1][0][:8],i[0]))
+            MEMORIA.append((i[1][0][8:16],"--"))
+            MEMORIA.append((i[1][0][16:24],"--"))
+            print("instrucción: {}".format(i[0]))
+            print("COD: "+i[1][0][:8]+" "+i[1][0][8:16]+" "+i[1][0][16:24])
+        elif a == 4:
+            MEMORIA.append((i[1][0][:8], i[0]))
+            MEMORIA.append((i[1][0][8:16], "--"))
+            MEMORIA.append((i[1][0][16:24], "--"))
+            MEMORIA.append((i[1][0][24:32], "--"))
+            print("instrucción: {}".format(i[0]))
+            print("COD: "+i[1][0][:8]+" "+i[1][0][8:16]+" "+i[1][0][16:24],i[1][0][24:32])
+        else:ERROR()
+        time.sleep(tiempo)
+    BORRAR()
+    print("A MEMORIA")
+    j = 0
+    for i in MEMORIA:
+        print("[{}]--> MEMORIA[{}]  ".format(i[0],j))
+        print("[]--> MEMORIA[{}]  ".format(i[0]))
+        j = j +1
+        BORRAR()
+        time.sleep(tiempo)
+    j = 0
+    for i in MEMORIA:
+        print("[{}]--> [{}]  ".format(j,i[0]))
+        j = j +  1
 
 leer_cod_assembler()
 maquina_a_memoria()
