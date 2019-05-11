@@ -1,6 +1,7 @@
 #imports
 import sys
 import time
+import os
 
 #// VARIABLES GLOBALES //
 MEMORIA = []
@@ -18,7 +19,7 @@ banderas_estado = {"NZ":["000",""],"Z":["001",""],"NC":["010",""],"C":["011",""]
 
 
 #MOSTRAR
-tiempo = 0.5
+tiempo = 1
 
 #CODIGOS
 codigo_assemblre = []
@@ -39,10 +40,15 @@ def complemento_a_dos(n):
 
 def ERROR(instruccion):
     print("ERROR!!", instruccion)
-    time.sleep(1000)
+    time.sleep(1)
     sys.exit()
+    print(cv)
 
-def BORRAR():pass
+def BORRAR():
+    if os.name == "posix":
+        os.system("clear")
+    elif os.name == "ce" or os.name == "nt" or os.name == "dos":
+        os.system("cls")
 
 def leer_cod_assembler():
     print("Leyendo")
@@ -210,7 +216,6 @@ def assembre_a_maquina(instruccion):
 
 def maquina_a_memoria():
     global MEMORIA,tiempo
-    time.sleep(tiempo)
     BORRAR()
     for i in codigo_assemblre:
         a = i[1][1]
@@ -237,21 +242,28 @@ def maquina_a_memoria():
             print("instrucción: {}".format(i[0]))
             print("COD: "+i[1][0][:8]+" "+i[1][0][8:16]+" "+i[1][0][16:24],i[1][0][24:32])
         else:ERROR()
-        time.sleep(tiempo)
-    BORRAR()
-    print("A MEMORIA")
+        time.sleep(tiempo/2)
+        BORRAR()
     j = 0
     for i in MEMORIA:
         print("[{}]--> MEMORIA[{}]  ".format(i[0],j))
-        print("[]--> MEMORIA[{}]  ".format(i[0]))
+        print("[{}]--> MEMORIA[{}]  ".format(j,i[0]))
         j = j +1
+        time.sleep(0.1)
         BORRAR()
-        time.sleep(tiempo)
     j = 0
+    BORRAR()
+    print("MEMORIA")
     for i in MEMORIA:
         print("[{}]--> [{}]  ".format(j,i[0]))
         j = j +  1
 
-leer_cod_assembler()
-maquina_a_memoria()
-print(MEMORIA)
+BORRAR()
+
+def eje():
+    leer_cod_assembler()
+    maquina_a_memoria()
+
+def interfaz():
+    pass
+eje()
