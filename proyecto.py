@@ -6,7 +6,7 @@ import os
 #// VARIABLES GLOBALES //
 MEMORIA = []
 dic_montaje = 0
-tamaño_MEMORIA = 32
+tamaño_MEMORIA = 64
 PC = 0
 
 #REGISTROS, donde se guarda su código y su contenido EN UN ARREGLO
@@ -22,7 +22,7 @@ banderas_estado = {"NZ":["000",""],"Z":["001",""],"NC":["010",""],"C":["011",""]
 
 
 #MOSTRAR
-tiempo = 1
+tiempo = 0.5
 
 #CODIGOS
 codigo_assemblre = []
@@ -110,16 +110,16 @@ def ADD(instruccion):
     binario = ""
 
     if  instruccion[1]=="A" and registros.get(instruccion[2]) != None:
-         binario = "10000"+registros[instruccion[2]][0],1
+         binario = "10000"+registros[instruccion[2]][0],1,1
     elif instruccion[1]=="A" and instruccion[2].find("(") == -1:
         instruccion[2] = instruccion[2].replace("(", "")
         instruccion[2] = instruccion[2].replace(")", "")
         a = "{0:b}".format(int(instruccion[2]))
-        binario = "11000110"+ceros_a_la_izq(a,8),2
+        binario = "11000110"+ceros_a_la_izq(a,8),2,2
     elif instruccion[1]=="A" and instruccion[2]=="(HL)":
-        binario = "10000110",1
+        binario = "10000110",1,3
     elif instruccion[1]=="HL" and registros_16.get(instruccion[2]) != None:
-        binario = "00"+registros_16[instruccion[2]][0]+"1001",1
+        binario = "00"+registros_16[instruccion[2]][0]+"1001",1,4
     else:
         ERROR(instruccion)
     return binario
@@ -128,9 +128,9 @@ def ADC(instruccion):
     global registros, registros_16
     binario = ""
     if  instruccion[1]=="A" and registros.get(instruccion[2]) != None:
-         binario = "10001"+registros[instruccion[2]][0],1
+         binario = "10001"+registros[instruccion[2]][0],1,1
     elif instruccion[1]=="HL" and registros_16.get(instruccion[2]) != None:
-        binario = "110110101"+registros_16[instruccion[2]][0]+"1010",2
+        binario = "110110101"+registros_16[instruccion[2]][0]+"1010",2,2
     else: ERROR(instruccion)
     return binario
 
@@ -138,7 +138,7 @@ def SUB(instruccion):
     global registros, registros_16
     binario = ""
     if registros.get(instruccion[1]) != None:
-        binario = "10010" + registros[instruccion[1]][0], 1
+        binario = "10010" + registros[instruccion[1]][0], 1,1
     else:ERROR(instruccion)
     return binario
 
@@ -146,9 +146,9 @@ def SBC(instruccion):
     global registros, registros_16
     binario = ""
     if  instruccion[1]=="A" and registros.get(instruccion[2]) != None:
-         binario = "10011"+registros[instruccion[2]][0],1
+         binario = "10011"+registros[instruccion[2]][0],1,1
     elif instruccion[1]=="HL" and registros_16.get(instruccion[2]) != None:
-        binario = "1101010101"+registros_16[instruccion[2]][0]+"0101",2
+        binario = "1101010101"+registros_16[instruccion[2]][0]+"0101",2,2
     else: ERROR(instruccion)
     return binario
 
@@ -156,10 +156,10 @@ def INC(instruccion):
     global registros, registros_16
     binario = ""
     if registros.get(instruccion[1]) != None:
-        binario = "00" + registros[instruccion[1]][0]+"100",1
+        binario = "00" + registros[instruccion[1]][0]+"100",1,1
     elif registros_16.get(instruccion[1]) != None:
-        binario = "00" + registros_16[instruccion[1]][0]+"0011",1
-    elif instruccion[1]=="(HL)": binario = "00110100",1
+        binario = "00" + registros_16[instruccion[1]][0]+"0011",1,3
+    elif instruccion[1]=="(HL)": binario = "00110100",1,2
     else:ERROR(instruccion)
     return binario
 
@@ -167,10 +167,10 @@ def DEC(instruccion):
     global registros, registros_16
     binario = ""
     if registros.get(instruccion[1]) != None:
-        binario = "00" + registros[instruccion[1]][0]+"010",1
+        binario = "00" + registros[instruccion[1]][0]+"010",1,1
     elif registros_16.get(instruccion[1]) != None:
-        binario = "00" + registros_16[instruccion[1]][0]+"1011",1
-    elif instruccion[1]=="(HL)": binario = "00110010",1
+        binario = "00" + registros_16[instruccion[1]][0]+"1011",1,3
+    elif instruccion[1]=="(HL)": binario = "00110010",1,2
     else:ERROR(instruccion)
     return binario
 
@@ -280,12 +280,13 @@ def acciones(instruccion, tipo):
         elif tipo == 2: registros[instruccion[1]]=instruccion[2]
         elif tipo == 3: registros["A"]=MEMORIA[int(registros_16[instruccion[2]])]
         elif tipo == 4: registros["A"]=MEMORIA[int(instruccion[2])]
-        elif tipo == 5: MEMORIA[registros_16[1]]=registros["A"]
+        elif tipo == 5: MEMORIA[int(registros_16[instruccion[1]])]=registros["A"]
         elif tipo == 6: MEMORIA[int(instruccion[1])]=registros["A"]
         elif tipo == 7: registros_16[instruccion[1]]=instruccion[2]
         elif tipo == 9: registros_16["HL"]=MEMORIA[int(instruccion[2])]
         elif tipo == 8: registros_16[instruccion[1]]=MEMORIA[int(instruccion[2])]
         else: ERROR(instruccion)
+
     elif instruccion[0]=="JP":
         if tipo == 2: PC = int(instruccion[1])
         elif tipo == 1:
@@ -296,11 +297,54 @@ def acciones(instruccion, tipo):
             PC = int(registros["HL"])
         else:ERROR([instruccion,banderas_estado[instruccion[1]]])
 
+    elif instruccion[0]=="ADD":
+        if tipo == 1: registros["A"]=ALU(["ADD",int(registros["A"]),int(registros[instruccion[2]])])
+        elif tipo == 2: registros["A"]=ALU(["ADD",int(registros["A"]),int(instruccion[2])])
+        elif tipo == 3: registros["A"]=ALU(["ADD",int(registros["A"]),MEMORIA[int(registros_16["HL"])]])
+        elif tipo == 4: registros_16["HL"]=ALU(["ADD",int(registros_16["HL"]),int(registros_16[instruccion[2]])])
+        else:ERROR(instruccion)
 
-    print(registros_16)
-    print(registros)
+    elif instruccion[0]=="ADC":
+        if tipo == 1:registros["A"]=ALU(["ADC",int(registros["A"]),int(registros[instruccion[2]])])
+        elif tipo ==2:registros_16["16"]=ALU(["ADC",int(registros_16["HL"]),int(registros_16[instruccion[1]])])
+        else:ERROR(instruccion)
+    elif instruccion[0]=="SUB":
+        if tipo==1: registros["A"]=ALU(["SUB",int(registros["A"]),int(registros[instruccion[1]])])
+        else:ERROR(instruccion)
+    elif instruccion[0]=="SBC":
+        if tipo==1: registros["A"]=ALU(["SUC",int(registros["A"]),int(registros[instruccion[2]])])
+        elif tipo==2: registros_16["HL"]=ALU(["SUC",int(registros_16["HL"]),int(registros_16[instruccion[2]])])
+        else:ERROR(instruccion)
+    elif instruccion[0] == "INC":
+        if tipo==1:registros[instruccion[1]]=ALU(["INC",int(registros[instruccion[1]])])
+        elif tipo == 2:MEMORIA[int(registros_16["HL"])]=ALU(["INC",int(MEMORIA[int(registros_16["HL"])])])
+        elif tipo ==3:registros_16[instruccion[1]]=ALU(["INC",int(registros_16[instruccion[1]])])
+        else:ERROR(instruccion)
 
+    elif instruccion[0] == "DEC":
+        if tipo == 1:
+            registros[instruccion[1]] = ALU(["DEC", int(registros[instruccion[1]])])
+        elif tipo == 2:
+            MEMORIA[int(registros_16["HL"])] = ALU(["DEC", int(MEMORIA[int(registros_16["HL"])])])
+        elif tipo == 3:
+            registros_16[instruccion[1]] = ALU(["DEC", int(registros_16[instruccion[1]])])
+        else:
+            ERROR(instruccion)
+    elif instruccion[0]=="AND":
+            registros["A"]=ALU(["AND",int(registros["A"]),registros[instruccion[1]]])
+    elif instruccion[0]=="OR":
+            registros["A"]=ALU(["OR",int(registros["A"]),registros[instruccion[1]]])
+    elif instruccion[0]=="XOR":
+            registros["A"]=ALU(["XOR",int(registros["A"]),registros[instruccion[1]]])
+    elif instruccion[0]=="CP":
+            registros["A"]=ALU(["CP",int(registros["A"]),registros[instruccion[1]]])
+    elif instruccion[0]=="NEG":
+            registros["A"]=ALU(["NEG",int(registros["A"]),registros[instruccion[1]]])
+    else:ERROR(instruccion)
 
+def ALU(a):
+    print("instrucción",a)
+    return "0"
 def eje():
     global dic_montaje,registros,registros_16,PC
     leer_cod_assembler()
@@ -313,8 +357,12 @@ def eje():
         instruccion = MEMORIA[PC]
         if instruccion[1][0]=="HALT": break
         if instruccion[1][0]=="NOP": pass
-        if instruccion[1]!="--":
-            acciones(instruccion[1],instruccion[2])
+        else:
+            if instruccion[1]!="--":
+                print(registros)
+                print(registros_16)
+                print(instruccion)
+                acciones(instruccion[1],instruccion[2])
 
         PC += 1
 
