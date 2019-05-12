@@ -5,6 +5,9 @@ import os
 
 #// VARIABLES GLOBALES //
 MEMORIA = []
+dic_montaje = 0
+tamaño_MEMORIA = 32
+PC = 0
 
 #REGISTROS, donde se guarda su código y su contenido EN UN ARREGLO
 # ejemplo poner NZ = 1, -->banderas_estado["NZ"][1] = "1"
@@ -52,12 +55,14 @@ def BORRAR():
 
 def leer_cod_assembler():
     print("Leyendo")
-    global codigo_assemblre
+    global codigo_assemblre,dic_montaje
     while True:
         entrada = sys.stdin.readline().replace(",","").strip().split(' ')
         if entrada[0] == "":
             break
-        codigo_assemblre.append([entrada,assembre_a_maquina(entrada)])
+        if entrada[0]=="ORG": dic_montaje = int(entrada[1])
+        else:
+            codigo_assemblre.append([entrada,assembre_a_maquina(entrada)])
 
 def LD(instruccion):
     global registros, registros_16
@@ -174,29 +179,31 @@ def JP(instruccion):
     binario = ""
     if banderas_estado.get(instruccion[1]) != None:
         a = "{0:b}".format(int(instruccion[2]))
-        binario = "11" + banderas_estado[instruccion[1]][0]+"010"+ceros_a_la_izq(a,16), 3
+        binario = "11" + banderas_estado[instruccion[1]][0]+"010"+ceros_a_la_izq(a,16), 3,1
+    elif instruccion[1]=="(HL)":
+        binario = "11101001",1,3
     else:
-        a = "{0:b}".format(int(instruccion[2]))
-        binario = "11000011" +  ceros_a_la_izq(a, 16), 3
+        a = "{0:b}".format(int(instruccion[1]))
+        binario = "11000011" +  ceros_a_la_izq(a, 16), 3,2
     return binario
 
 def otras_fun(instruccion):
     global registros, registros_16
     binario = ""
     if instruccion[0]=="NEG":
-        binario = "1101010110000100",2
+        binario = "1101010110000100",2,1
     elif instruccion[0]=="NOP":
-        binario = "00000000",1
+        binario = "00000000",1,1
     elif instruccion[0]=="HALT":
-        binario = "10110110",1
+        binario = "10110110",1,1
     elif instruccion[0]=="AND" and registros.get(instruccion[1]) != None:
-        binario = "10100"+registros[instruccion[1]][0],1
+        binario = "10100"+registros[instruccion[1]][0],1,1
     elif instruccion[0]=="OR" and registros.get(instruccion[1]) != None:
-        binario = "10110"+registros[instruccion[1]][0],1
+        binario = "10110"+registros[instruccion[1]][0],1,1
     elif instruccion[0]=="XOR" and registros.get(instruccion[1]) != None:
-        binario = "10101"+registros[instruccion[1]][0],1
+        binario = "10101"+registros[instruccion[1]][0],1,1
     elif instruccion[0]=="CP" and registros.get(instruccion[1]) != None:
-        binario = "10111"+registros[instruccion[1]][0],1
+        binario = "10111"+registros[instruccion[1]][0],1,1
     else:ERROR(instruccion)
     return binario
 
@@ -215,27 +222,29 @@ def assembre_a_maquina(instruccion):
         ERROR(instruccion)
 
 def maquina_a_memoria():
-    global MEMORIA,tiempo
+    global MEMORIA,tiempo,dic_montaje,tamaño_MEMORIA
+    for i in range(dic_montaje):
+        MEMORIA.append(None)
     BORRAR()
     for i in codigo_assemblre:
         a = i[1][1]
         if a == 1:
-            MEMORIA.append((i[1][0],i[0]))
+            MEMORIA.append((i[1][0],i[0],i[1][2]))
             print("instrucción: {}".format(i[0]))
             print("COD: "+i[1][0])
         elif a == 2:
-            MEMORIA.append((i[1][0][:8],i[0]))
+            MEMORIA.append((i[1][0][:8],i[0],i[1][2]))
             MEMORIA.append((i[1][0][8:16],"--"))
             print("instrucción: {}".format(i[0]))
             print("COD: "+i[1][0][:8]+" "+i[1][0][8:16])
         elif a == 3:
-            MEMORIA.append((i[1][0][:8],i[0]))
+            MEMORIA.append((i[1][0][:8],i[0],i[1][2]))
             MEMORIA.append((i[1][0][8:16],"--"))
             MEMORIA.append((i[1][0][16:24],"--"))
             print("instrucción: {}".format(i[0]))
             print("COD: "+i[1][0][:8]+" "+i[1][0][8:16]+" "+i[1][0][16:24])
         elif a == 4:
-            MEMORIA.append((i[1][0][:8], i[0]))
+            MEMORIA.append((i[1][0][:8], i[0],i[1][2]))
             MEMORIA.append((i[1][0][8:16], "--"))
             MEMORIA.append((i[1][0][16:24], "--"))
             MEMORIA.append((i[1][0][24:32], "--"))
@@ -246,24 +255,74 @@ def maquina_a_memoria():
         BORRAR()
     j = 0
     for i in MEMORIA:
-        print("[{}]--> MEMORIA[{}]  ".format(i[0],j))
-        print("[{}]--> MEMORIA[{}]  ".format(j,i[0]))
+        if i != None:
+            print("[{}]--> MEMORIA[{}]  ".format(i[0],j))
+            print("[{}]--> MEMORIA[{}]  ".format(j,i[0]))
         j = j +1
         time.sleep(0.1)
         BORRAR()
     j = 0
     BORRAR()
     print("MEMORIA")
+    print(MEMORIA)
     for i in MEMORIA:
-        print("[{}]--> [{}]  ".format(j,i[0]))
+        if i != None:
+            print("[{}]--> [{}]  ".format(j,i[0]))
         j = j +  1
+    while len(MEMORIA)<tamaño_MEMORIA: MEMORIA.append(None)
 
-BORRAR()
+
+def acciones(instruccion, tipo):
+    global  registros,registros_16,PC
+    print(instruccion,tipo)
+    if instruccion[0]=="LD":
+        if tipo == 1: registros[instruccion[1]]=registros[instruccion[2]]
+        elif tipo == 2: registros[instruccion[1]]=instruccion[2]
+        elif tipo == 3: registros["A"]=MEMORIA[int(registros_16[instruccion[2]])]
+        elif tipo == 4: registros["A"]=MEMORIA[int(instruccion[2])]
+        elif tipo == 5: MEMORIA[registros_16[1]]=registros["A"]
+        elif tipo == 6: MEMORIA[int(instruccion[1])]=registros["A"]
+        elif tipo == 7: registros_16[instruccion[1]]=instruccion[2]
+        elif tipo == 9: registros_16["HL"]=MEMORIA[int(instruccion[2])]
+        elif tipo == 8: registros_16[instruccion[1]]=MEMORIA[int(instruccion[2])]
+        else: ERROR(instruccion)
+    elif instruccion[0]=="JP":
+        if tipo == 2: PC = int(instruccion[1])
+        elif tipo == 1:
+            if banderas_estado[instruccion[1]][1]=="1":PC = int(instruccion[2])
+            elif banderas_estado[instruccion[1]][1]=="0": pass
+            else: ERROR([instruccion,banderas_estado[instruccion[1]]])
+        elif tipo == 3:
+            PC = int(registros["HL"])
+        else:ERROR([instruccion,banderas_estado[instruccion[1]]])
+
+
+    print(registros_16)
+    print(registros)
+
 
 def eje():
+    global dic_montaje,registros,registros_16,PC
     leer_cod_assembler()
     maquina_a_memoria()
+    PC = dic_montaje
+
+    registros = {"A":"", "B": "", "C": "", "D": "", "E": "","H": "", "L": ""}
+    registros_16 = {"BC": "", "DE": "", "HL": "", "SP": ""}
+    while True:
+        instruccion = MEMORIA[PC]
+        if instruccion[1][0]=="HALT": break
+        if instruccion[1][0]=="NOP": pass
+        if instruccion[1]!="--":
+            acciones(instruccion[1],instruccion[2])
+
+        PC += 1
+
 
 def interfaz():
     pass
+BORRAR()
 eje()
+print(MEMORIA)
+print(registros_16)
+print(registros)
