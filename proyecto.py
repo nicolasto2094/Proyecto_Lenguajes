@@ -76,7 +76,7 @@ def LD(instruccion):
         instruccion[2] = instruccion[2].replace("(", "")
         instruccion[2] = instruccion[2].replace(")", "")
         if registros_16.get(instruccion[2]) != None:
-            binario = "00" + registros_16[instruccion[2]][0] + "101", 1,3
+            binario = "00" + registros_16[instruccion[2]][0] + "1101", 1,3
         else:
             a = "{0:b}".format(int(instruccion[2]))
             binario = "00111101" + ceros_a_la_izq(a, 16), 3,4
@@ -84,7 +84,7 @@ def LD(instruccion):
         instruccion[1] = instruccion[1].replace("(", "")
         instruccion[1] = instruccion[1].replace(")", "")
         if registros_16.get(instruccion[1]) != None:
-            binario = "00" + registros_16[instruccion[1]][0] + "010", 1,5
+            binario = "00" + registros_16[instruccion[1]][0]+"0" + "010", 1,5
         else:
             a = "{0:b}".format(int(instruccion[1]))
             binario = "00110010" + ceros_a_la_izq(a, 16), 3,6
@@ -130,7 +130,7 @@ def ADC(instruccion):
     if  instruccion[1]=="A" and registros.get(instruccion[2]) != None:
          binario = "10001"+registros[instruccion[2]][0],1,1
     elif instruccion[1]=="HL" and registros_16.get(instruccion[2]) != None:
-        binario = "110110101"+registros_16[instruccion[2]][0]+"1010",2,2
+        binario = "1101010101"+registros_16[instruccion[2]][0]+"1010",2,2
     else: ERROR(instruccion)
     return binario
 
@@ -254,27 +254,31 @@ def maquina_a_memoria():
         time.sleep(tiempo/2)
         BORRAR()
     j = 0
+    print("Pasando a MEMORIA, presione ENTER para continuar")
+    entrada = sys.stdin.readline()
     for i in MEMORIA:
         if i != None:
-            print("[{}]--> MEMORIA[{}]  ".format(i[0],j))
-            print("[{}]--> MEMORIA[{}]  ".format(j,i[0]))
+            if len(i[0]) < 8:
+                print(i)
+                ERROR(" ")
+            print("     [{}]--MEMORIA[{}]  ".format(i[0],j))
+            print("     [{}]--MEMORIA[{}]  ".format(j,i[0]))
         j = j +1
-        time.sleep(0.1)
+        time.sleep(tiempo/2)
         BORRAR()
     j = 0
     BORRAR()
     print("MEMORIA")
-    print(MEMORIA)
+    print("Ver MEMORIA")
+    entrada = sys.stdin.readline()
     for i in MEMORIA:
         if i != None:
             print("[{}]--> [{}]  ".format(j,i[0]))
         j = j +  1
     while len(MEMORIA)<tamaño_MEMORIA: MEMORIA.append(None)
 
-
 def acciones(instruccion, tipo):
     global  registros,registros_16,PC
-    print(instruccion,tipo)
     if instruccion[0]=="LD":
         if tipo == 1: registros[instruccion[1]]=registros[instruccion[2]]
         elif tipo == 2: registros[instruccion[1]]=instruccion[2]
@@ -345,32 +349,246 @@ def acciones(instruccion, tipo):
 def ALU(a):
     print("instrucción",a)
     return "0"
+
 def eje():
     global dic_montaje,registros,registros_16,PC
     leer_cod_assembler()
     maquina_a_memoria()
     PC = dic_montaje
-
+    print(MEMORIA)
+    print("Ejecutar, presione ENTER para continuar")
+    entrada = sys.stdin.readline()
     registros = {"A":"", "B": "", "C": "", "D": "", "E": "","H": "", "L": ""}
     registros_16 = {"BC": "", "DE": "", "HL": "", "SP": ""}
+    i = 0
     while True:
         instruccion = MEMORIA[PC]
         if instruccion[1][0]=="HALT": break
         if instruccion[1][0]=="NOP": pass
         else:
             if instruccion[1]!="--":
-                print(registros)
-                print(registros_16)
-                print(instruccion)
                 acciones(instruccion[1],instruccion[2])
+        a=instruccion
+        interfaz(str(instruccion[0]))
 
         PC += 1
+        i+=1
 
 
-def interfaz():
-    pass
+def ALU(codigo):
+    def toBinario8(decimal):
+        b = "{0:b}".format(decimal)
+
+        c = len(b)
+        aux = ''
+        for i in range(0, 8 - c):
+            aux = aux + '0'
+        aux = aux + b
+        return aux
+
+    def toBinario16(decimal):
+        b = "{0:b}".format(decimal)
+
+        c = len(b)
+        aux = ''
+        for i in range(0, 16 - c):
+            aux = aux + '0'
+        aux = aux + b
+        return aux
+
+    def ADD(registro1, registro2):
+        registro1 = registro1 + registro2
+        return registro1
+
+    def SUB(registro1, registro2):
+        registro1 = registro1 - registro2
+        return registro1
+
+    def INC(registro1):
+        registro1 = registro1 + 1
+        return registro1
+
+    def DEC(registro1):
+        registro1 = registro1 - 1
+        return registro1
+
+    def AND(registro1, registro2):
+        a = (registro1 and registro2)
+        return a
+
+    def OR(registro1, registro2):
+        a = registro1 or registro2
+        return a
+
+    def XOR(registro1, registro2):
+        a = not (registro1 or registro2)
+        return a
+
+    def CP():
+        return 0
+
+    def NEG(registro1):
+        return -1 * (registro1)
+
+    def NOP(registro1):
+        return not (registro1)
+    if (codigo[0] == "ADD"):
+        resultado = ADD(codigo[1], codigo[2])  # suma para 8 bits
+        if (resultado == 0):
+            banderas_estado["Z"][1] = "1"
+        else:
+            banderas_estado["NZ"][1] = "1"
+        if (resultado <= -256 or resultado >= 255):
+            banderas_estado["C"][1] = "1"
+        else:
+            banderas_estado["NC"][1] = "1"
+        if (resultado % 2 == 0):
+            banderas_estado["PO"][1] = "1"
+        else:
+            banderas_estado["PE"][1] = "1"
+        if (resultado > 0):
+            banderas_estado["P"][1] = "1"
+        else:
+            banderas_estado["M"][1] = "1"
+
+    if (codigo[0] == "ADC"):
+        resultado = ADD(codigo[1], codigo[2])  # suma para 8 bits
+        if (resultado == 0):
+            banderas_estado["Z"][1] = "1"
+        else:
+            banderas_estado["NZ"][1] = "1"
+        if (resultado <= -256 or resultado >= 255):
+            banderas_estado["C"][1] = "1"
+        else:
+            banderas_estado["NC"][1] = "1"
+        if (resultado % 2 == 0):
+            banderas_estado["PO"][1] = "1"
+        else:
+            banderas_estado["PE"][1] = "1"
+        if (resultado > 0):
+            banderas_estado["P"][1] = "1"
+        else:
+            banderas_estado["M"][1] = "1"
+
+        resultado = resultado + int(banderas_estado["C"][1])
+
+    if (codigo[0] == "SUB"):
+        resultado = SUB(codigo[1], codigo[2])
+        if (resultado == 0):
+            banderas_estado["Z"][1] = "1"
+        else:
+            banderas_estado["NZ"][1] = "1"
+        if (resultado <= -256 or resultado >= 255):
+            banderas_estado["C"][1] = "1"
+        else:
+            banderas_estado["NC"][1] = "1"
+        if (resultado % 2 == 0):
+            banderas_estado["PO"][1] = "1"
+        else:
+            banderas_estado["PE"][1] = "1"
+        if (resultado > 0):
+            banderas_estado["P"][1] = "1"
+        else:
+            banderas_estado["M"][1] = "1"
+
+    if (codigo[0] == "INC"):
+        resultado = INC(codigo[1])
+        if (resultado == 0):
+            banderas_estado["Z"][1] = "1"
+        else:
+            banderas_estado["NZ"][1] = "1"
+        if (resultado <= -256 or resultado >= 255):
+            banderas_estado["C"][1] = "1"
+        else:
+            banderas_estado["NC"][1] = "1"
+        if (resultado % 2 == 0):
+            banderas_estado["PO"][1] = "1"
+        else:
+            banderas_estado["PE"][1] = "1"
+        if (resultado > 0):
+            banderas_estado["P"][1] = "1"
+        else:
+            banderas_estado["M"][1] = "1"
+
+    if (codigo[0] == "DEC"):
+        resultado = DEC(codigo[1])
+        if (resultado == 0):
+            banderas_estado["Z"][1] = "1"
+        else:
+            banderas_estado["NZ"][1] = "1"
+        if (resultado <= -256 or resultado >= 255):
+            banderas_estado["C"][1] = "1"
+        else:
+            banderas_estado["NC"][1] = "1"
+        if (resultado % 2 == 0):
+            banderas_estado["PO"][1] = "1"
+        else:
+            banderas_estado["PE"][1] = "1"
+        if (resultado > 0):
+            banderas_estado["P"][1] = "1"
+        else:
+            banderas_estado["M"][1] = "1"
+
+    if (codigo[0] == "AND"):
+        resultado = AND(codigo[1], codigo[2])
+
+    if (codigo[0] == "OR"):
+        resultado = OR(codigo[1])
+
+    if (codigo[0] == "XOR"):
+        resultado = XOR(codigo[1])
+
+    if (codigo[0] == "CP"):
+        resultado = CP(codigo[1])
+        resultado = ADD(codigo[1], codigo[2])  # suma para 8 bits
+        if (resultado == 0):
+            banderas_estado["Z"][1] = "1"
+        else:
+            banderas_estado["NZ"][1] = "1"
+        if (resultado <= -256 or resultado >= 255):
+            banderas_estado["C"][1] = "1"
+        else:
+            banderas_estado["NC"][1] = "1"
+        if (resultado % 2 == 0):
+            banderas_estado["PO"][1] = "1"
+        else:
+            banderas_estado["PE"][1] = "1"
+        if (resultado > 0):
+            banderas_estado["P"][1] = "1"
+        else:
+            banderas_estado["M"][1] = "1"
+
+    if (codigo[0] == "NEG"):
+        resultado = NEG(codigo[1])
+
+    if (codigo[0] == "NOP"):
+        resultado = NOP(codigo[1])
+
+    return resultado
+
+
+def interfaz(a):
+    time.sleep(tiempo*2)
+    contador = PC
+    BORRAR()
+    print("--------------------------------------------------------------------------------")
+    print("||    |CONTADOR: {}|                |Apubtador: {}|                          ".format(contador, PC))
+    print("||                   ")
+    print("||    REGISTROS 8 bits:              Instrucción: {}".format(a))
+    print("||                   ")
+    print("||    |A:{}|    ".format(registros["A"]))
+    print("||                   ")
+    print("||    |B: {}|    |C: {}|     |D: {}|".format(registros["B"],registros["C"],registros["D"]))
+    print("||                   ")
+    print("||    |E: {}|    |H: {}|     |L: {}|".format(registros["E"],registros["H"],registros["L"]))
+    print("||                   ")
+    print("||    REGISTROS 16 bits:              ".format())
+    print("||                   ")
+    print("||    |SP:{}|    ".format(registros_16["SP"]))
+    print("||                   ")
+    print("||    |BC: {}|    |DE: {}|     |HL: {}|".format(registros_16["BC"],registros_16["DE"],registros_16["HL"]))
+
+    #entrada = sys.stdin.readline()
 BORRAR()
 eje()
-print(MEMORIA)
-print(registros_16)
-print(registros)
+#interfaz()
